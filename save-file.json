@@ -1,17 +1,17 @@
 {
-    "Last Saved DateTime": "2024-12-16T01:44:30.955414",
-    "Coins": 13,
-    "Gacha Balls": 7,
+    "Last Saved DateTime": "2024-12-17T02:32:38.434154",
+    "Coins": 16,
+    "Gacha Balls": 18,
     "Prizes": {
         "Anime": {
             "Keychains": {
                 "1": {
                     "image": "images/prizes/anime/anime_keychain1.png",
-                    "won": true
+                    "won": false
                 },
                 "2": {
                     "image": "images/prizes/anime/anime_keychain2.png",
-                    "won": true
+                    "won": false
                 },
                 "3": {
                     "image": "images/prizes/anime/anime_keychain3.png",
@@ -21,7 +21,7 @@
             "Photocards": {
                 "1": {
                     "image": "images/prizes/anime/anime_photocard1.png",
-                    "won": true
+                    "won": false
                 },
                 "2": {
                     "image": "images/prizes/anime/anime_photocard2.png",
@@ -29,29 +29,29 @@
                 },
                 "3": {
                     "image": "images/prizes/anime/anime_photocard3.png",
-                    "won": true
+                    "won": false
                 },
                 "4": {
                     "image": "images/prizes/anime/anime_photocard4.png",
-                    "won": true
+                    "won": false
                 },
                 "5": {
                     "image": "images/prizes/anime/anime_photocard5.png",
-                    "won": true
+                    "won": false
                 }
             },
             "Pins": {
                 "1": {
                     "image": "images/prizes/anime/anime_pin1.png",
-                    "won": true
+                    "won": false
                 },
                 "2": {
                     "image": "images/prizes/anime/anime_pin2.png",
-                    "won": true
+                    "won": false
                 },
                 "3": {
                     "image": "images/prizes/anime/anime_pin3.png",
-                    "won": true
+                    "won": false
                 }
             }
         },
@@ -67,17 +67,17 @@
                 },
                 "3": {
                     "image": "images/prizes/cats/cats_keychain3.png",
-                    "won": true
+                    "won": false
                 }
             },
             "Photocards": {
                 "1": {
                     "image": "images/prizes/cats/cats_photocard1.png",
-                    "won": true
+                    "won": false
                 },
                 "2": {
                     "image": "images/prizes/cats/cats_photocard2.png",
-                    "won": true
+                    "won": false
                 },
                 "3": {
                     "image": "images/prizes/cats/cats_photocard3.png",
@@ -89,13 +89,13 @@
                 },
                 "5": {
                     "image": "images/prizes/cats/cats_photocard5.png",
-                    "won": true
+                    "won": false
                 }
             },
             "Pins": {
                 "1": {
                     "image": "images/prizes/cats/cats_pin1.png",
-                    "won": true
+                    "won": false
                 },
                 "2": {
                     "image": "images/prizes/cats/cats_pin2.png",
@@ -103,7 +103,7 @@
                 },
                 "3": {
                     "image": "images/prizes/cats/cats_pin3.png",
-                    "won": true
+                    "won": false
                 }
             }
         },
@@ -111,11 +111,11 @@
             "Keychains": {
                 "1": {
                     "image": "images/prizes/genshin-hsr/genshin-hsr_keychain1.png",
-                    "won": true
+                    "won": false
                 },
                 "2": {
                     "image": "images/prizes/genshin-hsr/genshin-hsr_keychain2.png",
-                    "won": true
+                    "won": false
                 },
                 "3": {
                     "image": "images/prizes/genshin-hsr/genshin-hsr_keychain3.png",
@@ -125,7 +125,7 @@
             "Photocards": {
                 "1": {
                     "image": "images/prizes/genshin-hsr/genshin-hsr_photocard1.png",
-                    "won": true
+                    "won": false
                 },
                 "2": {
                     "image": "images/prizes/genshin-hsr/genshin-hsr_photocard2.png",
@@ -133,29 +133,29 @@
                 },
                 "3": {
                     "image": "images/prizes/genshin-hsr/genshin-hsr_photocard3.png",
-                    "won": true
+                    "won": false
                 },
                 "4": {
                     "image": "images/prizes/genshin-hsr/genshin-hsr_photocard4.png",
-                    "won": true
+                    "won": false
                 },
                 "5": {
                     "image": "images/prizes/genshin-hsr/genshin-hsr_photocard5.png",
-                    "won": true
+                    "won": false
                 }
             },
             "Pins": {
                 "1": {
                     "image": "images/prizes/genshin-hsr/genshin-hsr_pin1.png",
-                    "won": true
+                    "won": false
                 },
                 "2": {
                     "image": "images/prizes/genshin-hsr/genshin-hsr_pin2.png",
-                    "won": true
+                    "won": false
                 },
                 "3": {
                     "image": "images/prizes/genshin-hsr/genshin-hsr_pin3.png",
-                    "won": true
+                    "won": false
                 }
             }
         },
@@ -167,21 +167,21 @@
                 },
                 "2": {
                     "image": "images/prizes/capybara/capybara_keychain2.png",
-                    "won": true
+                    "won": false
                 },
                 "3": {
                     "image": "images/prizes/capybara/capybara_keychain3.png",
-                    "won": true
+                    "won": false
                 }
             },
             "Photocards": {
                 "1": {
                     "image": "images/prizes/capybara/capybara_photocard1.png",
-                    "won": true
+                    "won": false
                 },
                 "2": {
                     "image": "images/prizes/capybara/capybara_photocard2.png",
-                    "won": true
+                    "won": false
                 },
                 "3": {
                     "image": "images/prizes/capybara/capybara_photocard3.png",
@@ -189,11 +189,11 @@
                 },
                 "4": {
                     "image": "images/prizes/capybara/capybara_photocard4.png",
-                    "won": true
+                    "won": false
                 },
                 "5": {
                     "image": "images/prizes/capybara/capybara_photocard5.png",
-                    "won": true
+                    "won": false
                 }
             },
             "Pins": {
@@ -203,11 +203,11 @@
                 },
                 "2": {
                     "image": "images/prizes/capybara/capybara_pin2.png",
-                    "won": true
+                    "won": false
                 },
                 "3": {
                     "image": "images/prizes/capybara/capybara_pin3.png",
-                    "won": true
+                    "won": false
                 }
             }
         }

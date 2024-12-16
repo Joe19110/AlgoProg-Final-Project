@@ -10,8 +10,8 @@ import tempfile
 import json
 from scipy.spatial import ConvexHull
 from datetime import datetime
-import time
-
+from claw import Claw
+from gacha_ball import GachaBall
 # Initialize Pygame
 pygame.init()
 
@@ -40,37 +40,7 @@ ball_image = pygame.transform.scale(ball_image, (70, 70))
 
 claw_animation_close = [claw_image1, claw_image2, claw_image3]  # List of frames
 claw_animation_open = [claw_image3, claw_image2, claw_image1]
-current_frame = 0  # Track current frame in animation
-frame_delay = 5  # Delay before switching to the next frame
-frame_counter = 0  # Counter to track frame delays
-def get_claw_points_from_surface(surface, scale=1.0):
-    """Extract claw points from a Pygame surface."""
-    temp_file = os.path.join(tempfile.gettempdir(), "claw_temp.png")
-    
-    # Save the surface to a file
-    pygame.image.save(surface, temp_file)
-    
-    # Load it with PIL
-    img = Image.open(temp_file).convert("RGBA")
-    
-    # Extract alpha channel and compute convex hull
-    alpha = np.array(img)[:, :, 3]
-    non_transparent_coords = np.column_stack(np.where(alpha > 0))
-    hull = ConvexHull(non_transparent_coords)
-    hull_points = non_transparent_coords[hull.vertices]
-    
-    # Center and scale points
-    center_x = (hull_points[:, 1].max() + hull_points[:, 1].min()) // 2
-    center_y = (hull_points[:, 0].max() + hull_points[:, 0].min()) // 2
-    scaled_points = [
-        ((x - center_x) * scale, (y - center_y) * scale)
-        for y, x in hull_points
-    ]
-    
-    # Clean up temporary file
-    os.remove(temp_file)
-    
-    return scaled_points
+
 
 def create_container(space):
     container_width = 770  # Width of the container
@@ -99,60 +69,40 @@ def create_container(space):
     for line in static_lines:
         line.elasticity = 0.6
         space.add(line)
-
-
 create_container(space)
 gacha_prizes = []  # Start with an empty list of gacha balls
-
-# Create gacha balls
-def create_gacha_ball(space):
-
-    # Randomize spawn position within the container, but within container bounds
-    spawn_x = random.randint(29, 30)
-    spawn_y = 150
-
-    body = pymunk.Body(1, pymunk.moment_for_circle(1, 0, 15))
-    body.position = spawn_x, spawn_y  # Spawn inside the container area
-    shape = pymunk.Circle(body, 35)
-    shape.elasticity = 0.8
-    shape.friction = 0.5
-    shape.collision_type = 1
-    space.add(body, shape)
-    return body, shape
-
-
+def get_claw_points_from_surface(surface, scale=1.0):
+    """Extract claw points from a Pygame surface."""
+    temp_file = os.path.join(tempfile.gettempdir(), "claw_temp.png")
+    
+    # Save the surface to a file
+    pygame.image.save(surface, temp_file)
+    
+    # Load it with PIL
+    img = Image.open(temp_file).convert("RGBA")
+    
+    # Extract alpha channel and compute convex hull
+    alpha = np.array(img)[:, :, 3]
+    non_transparent_coords = np.column_stack(np.where(alpha > 0))
+    hull = ConvexHull(non_transparent_coords)
+    hull_points = non_transparent_coords[hull.vertices]
+    
+    # Center and scale points
+    center_x = (hull_points[:, 1].max() + hull_points[:, 1].min()) // 2
+    center_y = (hull_points[:, 0].max() + hull_points[:, 0].min()) // 2
+    scaled_points = [
+        ((x - center_x) * scale, (y - center_y) * scale)
+        for y, x in hull_points
+    ]
+    
+    # Clean up temporary file
+    os.remove(temp_file)
+    
+    return scaled_points
 claw_points_close_list = [get_claw_points_from_surface(image) for image in claw_animation_close]
 claw_points_open_list = [get_claw_points_from_surface(image) for image in claw_animation_open]
 # Example: Update the claw shape dynamically
-current_frame = 0  # Keep track of the current animation frame
-claw_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)  # Replace points[] with claw polygon points
-
-
-
-def update_claw_shape(space, claw_body, claw_points_list, current_frame):
-    """Update the claw shape based on the current animation frame."""
-    # Remove the old shapes from the body and the space
-    for shape in claw_body.shapes:
-        space.remove(shape)
-    
-    # Add the body to the space (if not already added)
-    if claw_body not in space.bodies:
-        space.add(claw_body)
-
-    # Create a new claw shape
-    new_claw_points = claw_points_list[current_frame]
-    claw_shape = pymunk.Poly(claw_body, new_claw_points)
-    claw_shape.elasticity = 0.4
-    claw_shape.friction = 0.5
-
-    # Add the new shape to the space
-    space.add(claw_shape)
-
-    return claw_shape
-
-
-
-
+ # Replace points[] with claw polygon points
 def blit_rotate_center(surf, image, topleft, angle):
     """Helper function to rotate an image around its center."""
     rotated_image = pygame.transform.rotate(image, angle)
@@ -162,41 +112,12 @@ def blit_rotate_center(surf, image, topleft, angle):
 # Timer event for spawning gacha balls
 spawn_event = pygame.USEREVENT + 1
 pygame.time.set_timer(spawn_event, 500)  # Spawn a ball every 2 seconds
-def check_claw_grab(claw_shape, gacha_prizes, grab_radius=40, grab_chance=1):
-    """Checks for collision between claw and balls."""
-    for body, shape in gacha_prizes:
-        # Check distance between the claw's center and the prize's center
-        claw_pos = claw_shape.body.position
-        prize_pos = body.position
-        distance = (claw_pos - prize_pos).length  # Vector distance
 
-        if distance <= grab_radius:  # Check if within grab radius
-            if random.random() <= grab_chance:  # Check grab chance
-                print("Ball grabbed!")
-                return body, shape  # Return grabbed ball
-    return None
-def shuffle_balls(gacha_prizes, intensity=500):
-    """
-    Apply random forces to all gacha balls to shuffle them.
-    
-    Args:
-        gacha_prizes (list): List of tuples (body, shape) representing the balls.
-        intensity (float): The magnitude of the random forces.
-    """
-    for body, shape in gacha_prizes:
-        # Generate random force components
-        force_x = random.uniform(-intensity, intensity)
-        force_y = random.uniform(-intensity, intensity)
-        
-        # Apply the force to the ball's body
-        body.apply_impulse_at_local_point((force_x, force_y))
+
 def show_prize_popup(screen, prize_image):
     """
     Display a pop-up overlay showing the prize.
-    
-    Args:
-        screen (pygame.Surface): The game screen.
-        prize_image (pygame.Surface): The image of the prize won.
+
     """
     overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 180))  # Semi-transparent black background
@@ -357,10 +278,7 @@ def display_shelves_with_nested_sections(prize_sections, columns_per_section):
                     if current_section_index < total_sections - 1:
                         current_section_index += 1
 
-claw_state = "idle"  # States: "idle", "descending", "ascending"
-grabbed_ball = None
-original_claw_y = 210
-target_claw_y = 450  # How far the claw should descend
+
 # Define the filename of the JSON file
 filename = 'save-file.json'
 
@@ -370,18 +288,33 @@ with open(filename, 'r') as file:
 
 # Access the 'Prizes' section only
 prize_sections = data.get("Prizes", {})
+def markPrize():
+    available_prizes = [
+        (main_section, subsection, key)
+        for main_section, subsections in prize_sections.items()
+        for subsection, prizes in subsections.items()
+        for key, prize in prizes.items()
+        if not prize["won"]
+    ]
 
+    if available_prizes:
+        # Randomly select a prize from the available ones
+        selected_main_section, selected_subsection, prize_key = random.choice(available_prizes)
 
+        # Mark the prize as won in prize_sections
+        prize_sections[selected_main_section][selected_subsection][prize_key]["won"] = True
 
+        # Show the prize popup with the prize image
+        prize_image = pygame.image.load(
+            prize_sections[selected_main_section][selected_subsection][prize_key]["image"]
+        ).convert_alpha()
+        show_prize_popup(screen, prize_image)
 def save_game_data(game_data, filename='save-file.json'):
     with open(filename, 'w') as file:
         json.dump(game_data, file, indent=4)
 def game_loop():
-    global claw_state, grabbed_ball, claw_body, current_frame, frame_counter, ballNum
-    claw_x = SCREEN_WIDTH // 2  # Initial claw X position
-    claw_body.position = (claw_x, original_claw_y)  # Initial claw position
-    claw_speed = 5
-    claw_state = "idle"
+    global ballNum
+    claw = Claw(700, space)
     running = True
     coinNum = data.get("Coins")
     last_time = pygame.time.get_ticks()  # Store the time at the start    # Store the time at the start
@@ -429,21 +362,21 @@ def game_loop():
                 running = False
             if event.type == spawn_event:
                 if i < 20:
-                    gacha_prizes.append(create_gacha_ball(space))
+                    gacha_prizes.append(GachaBall(space))
                     i += 1
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_s:
-                    shuffle_balls(gacha_prizes)
-                if event.key == pygame.K_LEFT and claw_state == "idle":  # Only move if in idle state
-                    claw_x = max(100, claw_x - claw_speed)  # Stay within bounds
+                    for gacha_ball in gacha_prizes:
+                        gacha_ball.shuffle()
+                if event.key == pygame.K_LEFT and claw.state == "idle":  # Only move if in idle state
+                    claw.x = max(100, claw.x - claw.SPEED)  # Stay within bounds
                     left_pressed = True
-                if event.key == pygame.K_RIGHT and claw_state == "idle":  # Only move if in idle state
-                    claw_x = min(SCREEN_WIDTH - 100, claw_x + claw_speed)  # Stay within bounds
+                if event.key == pygame.K_RIGHT and claw.state == "idle":  # Only move if in idle state
+                    claw.x = min(SCREEN_WIDTH - 100, claw.x + claw.SPEED)  # Stay within bounds
                     right_pressed = True
-                if event.key == pygame.K_SPACE and claw_state == "idle":  # Space to activate claw if idle
+                if event.key == pygame.K_SPACE and claw.state == "idle":  # Space to activate claw if idle
                     if coinNum > 0:
-                        claw_state = "descending"
-                        current_frame = 0  # Start close animation
+                        claw.state = "descending"
                         coinNum -= 1
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
@@ -462,16 +395,16 @@ def game_loop():
                     left_pressed = False
                 if right_button_rect.collidepoint(event.pos):
                     right_pressed = False
-        if claw_state == "idle":
+        if claw.state == "idle":
             if left_pressed:
                 screen.blit(leftbutton2, left_button_rect)  # Show pressed image for left button
-                claw_x = max(100, claw_x - claw_speed)
+                claw.x = max(100, claw.x - claw.SPEED)
             else:
                 screen.blit(leftbutton1, left_button_rect)  # Show normal image for left button
 
             if right_pressed:
                 screen.blit(rightbutton2, right_button_rect)  # Show pressed image for right button
-                claw_x = min(SCREEN_WIDTH - 100, claw_x + claw_speed)
+                claw.x = min(SCREEN_WIDTH - 100, claw.x + claw.SPEED)
             else:
                 screen.blit(rightbutton1, right_button_rect)  # Show normal im
         else:
@@ -479,91 +412,36 @@ def game_loop():
             screen.blit(rightbutton1, right_button_rect)
 
         # Update claw body position for physics
-        claw_body.position = (claw_x, claw_body.position.y)
+        claw.body.position = (claw.x, claw.body.position.y)
 
         # Handle claw descending
-        if claw_state == "descending":
-            claw_body.position = (claw_x, claw_body.position.y + claw_speed)
-            # Check if claw reached target or grabbed something
-            if claw_body.position.y >= target_claw_y:
-                grabbed_ball = check_claw_grab(claw_shape, gacha_prizes)
-                claw_state = "ascending"
-                current_frame = 0  # Reset for open animation
-                frame_counter += 1
-                if frame_counter >= frame_delay:
-                    frame_counter = 0
-                    current_frame = min(current_frame + 1, len(claw_points_close_list) - 1)
-            claw_shape = update_claw_shape(space, claw_body, claw_points_close_list, current_frame)
-            
-            
-
+        if claw.state == "descending":
+            claw.descend(gacha_prizes, claw_points_close_list)
         # Handle claw ascending
-        elif claw_state == "ascending":
-            claw_body.position = (claw_x, claw_body.position.y - claw_speed)
-            if grabbed_ball:
-                ball_body, _ = grabbed_ball
-                ball_body.position = claw_body.position + pymunk.Vec2d(0, 40)  # Offset below claw
-
-            # Reset claw to idle state after ascending
-            if claw_body.position.y <= original_claw_y:
-                claw_state = "idle"
-                current_frame = 0  # Reset animation
-                frame_counter = 0
-                frame_counter += 1
-                if frame_counter >= frame_delay:
-                    frame_counter = 0
-                    current_frame = min(current_frame + 1, len(claw_points_open_list) - 1)
-                if grabbed_ball:
-                        # Remove grabbed ball
-                        body, shape = grabbed_ball
-                        # Build a list of all available prizes from all sections
-                        available_prizes = [
-                            (main_section, subsection, key)
-                            for main_section, subsections in prize_sections.items()
-                            for subsection, prizes in subsections.items()
-                            for key, prize in prizes.items()
-                            if not prize["won"]
-                        ]
-
-                        if available_prizes:
-                            # Randomly select a prize from the available ones
-                            selected_main_section, selected_subsection, prize_key = random.choice(available_prizes)
-
-                            # Mark the prize as won in prize_sections
-                            prize_sections[selected_main_section][selected_subsection][prize_key]["won"] = True
-
-                            # Show the prize popup with the prize image
-                            prize_image = pygame.image.load(
-                                prize_sections[selected_main_section][selected_subsection][prize_key]["image"]
-                            ).convert_alpha()
-                            show_prize_popup(screen, prize_image)
-
-                        gacha_prizes.remove((body, shape))
-                        space.remove(body, shape)
-                        grabbed_ball = None
-                        # grabbed_ball = None
-                        print("Ball grabbed and removed!")
-            claw_shape = update_claw_shape(space, claw_body, claw_points_open_list, current_frame)
+        elif claw.state == "ascending":
+            if (claw.ascend(gacha_prizes, claw_points_open_list)):
+                markPrize()
+                
 
         # Draw claw
-        angle = math.degrees(claw_body.angle)
+        angle = math.degrees(claw.body.angle)
         claw_image = (
-            claw_animation_open[current_frame]
-            if claw_state == "ascending"
-            else claw_animation_close[current_frame]
+            claw_animation_open[claw.current_frame]
+            if claw.state == "ascending"
+            else claw_animation_close[claw.current_frame]
         )
         blit_rotate_center(
             screen,
             claw_image,
             (
-                claw_body.position.x - claw_image.get_width() // 2,
-                claw_body.position.y - claw_image.get_height() // 2,
+                claw.body.position.x - claw_image.get_width() // 2,
+                claw.body.position.y - claw_image.get_height() // 2,
             ),
             -angle,
         )
-
         # Draw gacha balls
-        for body, shape in gacha_prizes:
+        for gacha_ball in gacha_prizes:
+            body = gacha_ball.body
             angle = math.degrees(body.angle)
             x, y = body.position
             blit_rotate_center(screen, ball_image, (x - 40, y - 40), -angle)
@@ -573,16 +451,11 @@ def game_loop():
             coinNum += 1
             # Reset the minute timer
             last_time = current_time
-        
-        
         # Step the physics simulation
         space.step(1 / FPS)
         pygame.display.flip()  # Update display
         clock.tick(FPS)  # Maintain FPS
-
     pygame.quit()
-
-
 # Run the game loop
 game_loop()
 
