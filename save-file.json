@@ -1,7 +1,7 @@
 {
-    "Last Saved DateTime": "2024-12-17T02:32:38.434154",
-    "Coins": 16,
-    "Gacha Balls": 18,
+    "Last Saved DateTime": "2024-12-17T02:43:32.548973",
+    "Coins": 13,
+    "Gacha Balls": 17,
     "Prizes": {
         "Anime": {
             "Keychains": {
@@ -203,7 +203,7 @@
                 },
                 "2": {
                     "image": "images/prizes/capybara/capybara_pin2.png",
-                    "won": false
+                    "won": true
                 },
                 "3": {
                     "image": "images/prizes/capybara/capybara_pin3.png",

@@ -1,52 +1,26 @@
-import pygame
-import numpy as np
-import pymunk
-import pymunk.pygame_util
-import random
-import math
-from PIL import Image
 import os
-import tempfile
 import json
-from scipy.spatial import ConvexHull
+import math
+import pygame
+import pymunk
+import random
+import tempfile
+import pymunk.pygame_util
+import numpy as np
+from PIL import Image
 from datetime import datetime
+from scipy.spatial import ConvexHull
+
+# Claw and GachaBall classes
 from claw import Claw
 from gacha_ball import GachaBall
-# Initialize Pygame
-pygame.init()
 
-# Screen dimensions
-SCREEN_WIDTH = 700
-SCREEN_HEIGHT = 700
-
-# Set up display
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Claw Machine Game")
-clock = pygame.time.Clock()
-space = pymunk.Space()
-space.gravity = (0, 900)
-FPS = 60
-draw_options = pymunk.pygame_util.DrawOptions(screen)
-
-# Load images
-claw_image1 = pygame.image.load("images/claw1.png").convert_alpha()  # Transparent background
-claw_image2 = pygame.image.load("images/claw2.png").convert_alpha()
-claw_image3 = pygame.image.load("images/claw3.png").convert_alpha()
-ball_image = pygame.image.load("images/gacha.png").convert_alpha()  # Add more as needed
-background_image = pygame.image.load("images/machine.png").convert_alpha()
-# Resize images
-
-ball_image = pygame.transform.scale(ball_image, (70, 70))
-
-claw_animation_close = [claw_image1, claw_image2, claw_image3]  # List of frames
-claw_animation_open = [claw_image3, claw_image2, claw_image1]
-
-
+# Creates the container where the gacha balls will be contained
 def create_container(space):
-    container_width = 770  # Width of the container
-    container_height = 450  # Height of the container
-    center_x = 350  # Screen center x-coordinate
-    center_y = 340  # Desired y-coordinate for the center of the container
+    container_width = 770  
+    container_height = 450 
+    center_x = 350  
+    center_y = 340  
 
     half_width = container_width // 2
     half_height = container_height // 2
@@ -67,15 +41,24 @@ def create_container(space):
 
     # Set elasticity and add lines to the space
     for line in static_lines:
-        line.elasticity = 0.6
+        line.elasticity = 0.6 # Allows the gacha balls to partially bounce off the container
         space.add(line)
-create_container(space)
-gacha_prizes = []  # Start with an empty list of gacha balls
+
+# Draws a button on the screen
+def draw_button(screen, text, x, y, width, height, color, text_color):
+    pygame.draw.rect(screen, (0, 0, 0), (x - 2, y - 2, width + 4, height + 4)) # border
+    pygame.draw.rect(screen, color, (x, y, width, height))
+    font = pygame.font.Font(None, 20)
+    label = font.render(text, True, text_color)
+    text_rect = label.get_rect(center=(x + width // 2, y + height // 2))
+    screen.blit(label, text_rect)
+    return pygame.Rect(x, y, width, height)
+
+# Gets the points around the shape of the claw animation (ensures the game recognizes the different claw shapes)
 def get_claw_points_from_surface(surface, scale=1.0):
-    """Extract claw points from a Pygame surface."""
-    temp_file = os.path.join(tempfile.gettempdir(), "claw_temp.png")
-    
+
     # Save the surface to a file
+    temp_file = os.path.join(tempfile.gettempdir(), "claw_temp.png")
     pygame.image.save(surface, temp_file)
     
     # Load it with PIL
@@ -95,30 +78,20 @@ def get_claw_points_from_surface(surface, scale=1.0):
         for y, x in hull_points
     ]
     
-    # Clean up temporary file
+    # Remove temporary file
     os.remove(temp_file)
     
     return scaled_points
-claw_points_close_list = [get_claw_points_from_surface(image) for image in claw_animation_close]
-claw_points_open_list = [get_claw_points_from_surface(image) for image in claw_animation_open]
-# Example: Update the claw shape dynamically
- # Replace points[] with claw polygon points
+
+# Function to facilitate rotations around its center
 def blit_rotate_center(surf, image, topleft, angle):
-    """Helper function to rotate an image around its center."""
     rotated_image = pygame.transform.rotate(image, angle)
     new_rect = rotated_image.get_rect(center=image.get_rect(topleft=topleft).center)
     surf.blit(rotated_image, new_rect.topleft)
 
-# Timer event for spawning gacha balls
-spawn_event = pygame.USEREVENT + 1
-pygame.time.set_timer(spawn_event, 500)  # Spawn a ball every 2 seconds
-
-
+# Display a pop-up overlay showing the prize after grabbing a gacha ball
 def show_prize_popup(screen, prize_image):
-    """
-    Display a pop-up overlay showing the prize.
 
-    """
     overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 180))  # Semi-transparent black background
     
@@ -130,47 +103,36 @@ def show_prize_popup(screen, prize_image):
     text = font.render("Congratulations! You won:", True, (255, 255, 255))
     text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 130))
     screen.blit(text, text_rect)
+
+    # Resize prize image
     original_width, original_height = prize_image.get_size()
     scale_factor = min(150 / original_width, 150 / original_height)
     new_width = int(original_width * scale_factor)
     new_height = int(original_height * scale_factor)
-    # Draw prize image
     prize_image = pygame.transform.scale(prize_image, (new_width, new_height))
+
+    # Draw prize image
     prize_rect = prize_image.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
     screen.blit(prize_image, prize_rect)
     
     # Draw instructions
     font_instruction = pygame.font.Font(None, 30)
-    instruction_text = font_instruction.render("Press any key to continue...", True, (255, 255, 255))
+    instruction_text = font_instruction.render("Press ENTER to continue...", True, (255, 255, 255))
     instruction_rect = instruction_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 150))
     screen.blit(instruction_text, instruction_rect)
     
-    pygame.display.flip()
+    pygame.display.flip() # Updates the display
     
-    # Wait for key press to continue
+    # Wait for ENTER key press to continue
     waiting = True
     while waiting:
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
-                waiting = False
+                if event.key == pygame.K_RETURN:  # Check if Enter key is pressed
+                    waiting = False
 
-def draw_button(screen, text, x, y, width, height, color, text_color):
-    """
-    Draw a button on the screen.
-    """
-    pygame.draw.rect(screen, (0, 0,0), (x - 2, y - 2, width + 4, height + 4))
-    pygame.draw.rect(screen, color, (x, y, width, height))
-    font = pygame.font.Font(None, 20)
-    label = font.render(text, True, text_color)
-    text_rect = label.get_rect(center=(x + width // 2, y + height // 2))
-    screen.blit(label, text_rect)
-    return pygame.Rect(x, y, width, height)
+# Displays a shelf window showing the prize collection divided into sections and subsections
 def display_shelves_with_nested_sections(prize_sections, columns_per_section):
-    """
-    Display a shelf window showing the prize collection divided into sections
-    and subsections, with configurable columns per section or subsection.
-    Navigation between sections is handled with arrow buttons.
-    """
     shelf_width, shelf_height = 700, 700
     shelf_window = pygame.Surface((shelf_width, shelf_height))
     shelf_window.fill((230, 230, 230))  # Light gray background
@@ -183,13 +145,11 @@ def display_shelves_with_nested_sections(prize_sections, columns_per_section):
     total_sections = len(main_sections)
     current_section_index = 0
 
+    # Draws the content of the specified main section.
     def draw_section(section_index):
-        """
-        Draw the content of the specified main section.
-        """
-        shelf_window.fill((230, 230, 230))  # Clear the window
-        y_position = 40
 
+        shelf_window.fill((230, 230, 230)) # Clears the window
+        y_position = 40
         section_name, subsections = main_sections[section_index]
 
         # Draw main section header
@@ -209,6 +169,7 @@ def display_shelves_with_nested_sections(prize_sections, columns_per_section):
             y_position += 30  # Space below the subsection header
 
             for i, (name, data) in enumerate(prizes.items()):
+
                 # Load and scale prize image
                 image = pygame.image.load(data["image"]).convert_alpha()
                 original_width, original_height = image.get_size()
@@ -242,10 +203,8 @@ def display_shelves_with_nested_sections(prize_sections, columns_per_section):
             rows = (len(prizes) + columns - 1) // columns  # Calculate the number of rows
             y_position += rows * (new_height + padding) + 10  # Space between subsections
 
+    # Draw navigation buttons for moving between category pages
     def draw_navigation_buttons():
-        """
-        Draw navigation buttons for moving between sections.
-        """
         if current_section_index > 0:  # Left arrow
             pygame.draw.polygon(shelf_window, (0, 0, 0), [(20, shelf_height // 2), (50, shelf_height // 2 - 20), (50, shelf_height // 2 + 20)])
         if current_section_index < total_sections - 1:  # Right arrow
@@ -259,6 +218,7 @@ def display_shelves_with_nested_sections(prize_sections, columns_per_section):
         screen.blit(shelf_window, ((SCREEN_WIDTH - shelf_width) // 2, (SCREEN_HEIGHT - shelf_height) // 2))
         pygame.display.flip()
 
+        # Manages user input
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -267,7 +227,7 @@ def display_shelves_with_nested_sections(prize_sections, columns_per_section):
                     current_section_index -= 1
                 elif event.key == pygame.K_RIGHT and current_section_index < total_sections - 1:  # Navigate right
                     current_section_index += 1
-                elif event.key == pygame.K_ESCAPE:  # Exit the shelf view
+                elif (event.key == pygame.K_ESCAPE or event.key == pygame.K_SPACE):  # Exit the shelf view
                     running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_x, mouse_y = event.pos
@@ -276,19 +236,16 @@ def display_shelves_with_nested_sections(prize_sections, columns_per_section):
                         current_section_index -= 1
                 elif (shelf_width - 50) <= mouse_x <= (shelf_width - 20) and (shelf_height // 2 - 20) <= mouse_y <= (shelf_height // 2 + 20):  # Right arrow
                     if current_section_index < total_sections - 1:
-                        current_section_index += 1
+                        current_section_index += 1              
 
+# Saves the game progress into JSON file
+def save_game_data(game_data, filename='save-file.json'):
+    with open(filename, 'w') as file:
+        json.dump(game_data, file, indent=4)
 
-# Define the filename of the JSON file
-filename = 'save-file.json'
-
-# Open the file in read mode and load the JSON data into a Python dictionary
-with open(filename, 'r') as file:
-    data = json.load(file)
-
-# Access the 'Prizes' section only
-prize_sections = data.get("Prizes", {})
+# Marks off a prize as unlocked
 def markPrize():
+    # List of prizes that can be won
     available_prizes = [
         (main_section, subsection, key)
         for main_section, subsections in prize_sections.items()
@@ -297,7 +254,8 @@ def markPrize():
         if not prize["won"]
     ]
 
-    if available_prizes:
+    if available_prizes: # If a prize is available
+
         # Randomly select a prize from the available ones
         selected_main_section, selected_subsection, prize_key = random.choice(available_prizes)
 
@@ -309,9 +267,8 @@ def markPrize():
             prize_sections[selected_main_section][selected_subsection][prize_key]["image"]
         ).convert_alpha()
         show_prize_popup(screen, prize_image)
-def save_game_data(game_data, filename='save-file.json'):
-    with open(filename, 'w') as file:
-        json.dump(game_data, file, indent=4)
+
+# Main game loop
 def game_loop():
     global ballNum
     claw = Claw(700, space)
@@ -456,6 +413,58 @@ def game_loop():
         pygame.display.flip()  # Update display
         clock.tick(FPS)  # Maintain FPS
     pygame.quit()
+
+# Initialize Pygame
+pygame.init()
+
+# Screen dimensions constants
+SCREEN_WIDTH = 700
+SCREEN_HEIGHT = 700
+
+# Set up display
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Claw Machine Game")
+space = pymunk.Space()
+space.gravity = (0, 900)
+FPS = 60
+draw_options = pymunk.pygame_util.DrawOptions(screen)
+
+# Load images
+claw_image1 = pygame.image.load("images/claw1.png").convert_alpha()
+claw_image2 = pygame.image.load("images/claw2.png").convert_alpha()
+claw_image3 = pygame.image.load("images/claw3.png").convert_alpha()
+ball_image = pygame.image.load("images/gacha.png").convert_alpha()
+background_image = pygame.image.load("images/machine.png").convert_alpha()
+
+# Resize ball image
+ball_image = pygame.transform.scale(ball_image, (70, 70))
+
+# Lists of frames (for claw animation)
+claw_animation_close = [claw_image1, claw_image2, claw_image3]  
+claw_animation_open = [claw_image3, claw_image2, claw_image1]
+
+create_container(space)
+
+gacha_prizes = [] # List to store gacha balls
+
+# Lists of the claw points (following the claw animation shape)
+claw_points_close_list = [get_claw_points_from_surface(image) for image in claw_animation_close]
+claw_points_open_list = [get_claw_points_from_surface(image) for image in claw_animation_open]
+
+# Timer event for spawning gacha balls
+spawn_event = pygame.USEREVENT + 1
+pygame.time.set_timer(spawn_event, 500)  # Spawns a ball every 0.5 seconds
+
+# Loads data from JSON file into a dictionary
+filename = 'save-file.json'
+with open(filename, 'r') as file:
+    data = json.load(file)
+
+# Stores the 'Prizes' sections and its sub-section in a JSON format
+prize_sections = data.get("Prizes", {})
+
+# Initializes the clock for timers
+clock = pygame.time.Clock()
+
 # Run the game loop
 game_loop()
-
