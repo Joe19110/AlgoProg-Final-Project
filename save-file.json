@@ -1,7 +1,7 @@
 {
-    "Last Saved DateTime": "2024-12-17T02:43:32.548973",
-    "Coins": 13,
-    "Gacha Balls": 17,
+    "Last Saved DateTime": "2024-12-17T08:55:04.307821",
+    "Coins": 19,
+    "Gacha Balls": 16,
     "Prizes": {
         "Anime": {
             "Keychains": {
@@ -29,7 +29,7 @@
                 },
                 "3": {
                     "image": "images/prizes/anime/anime_photocard3.png",
-                    "won": false
+                    "won": true
                 },
                 "4": {
                     "image": "images/prizes/anime/anime_photocard4.png",

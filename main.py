@@ -270,21 +270,27 @@ def markPrize():
 
 # Main game loop
 def game_loop():
-    global ballNum
-    claw = Claw(700, space)
+    claw = Claw(SCREEN_WIDTH, space) # Claw declaration
     running = True
-    coinNum = data.get("Coins")
-    last_time = pygame.time.get_ticks()  # Store the time at the start    # Store the time at the start
-    interval = 60000  # 60,000 milliseconds = 1 minute
+    
+    last_time = pygame.time.get_ticks()  # Store the time at the start   
+
     if datetime.now().date() != datetime.fromisoformat(data.get("Last Saved DateTime")).date():
-        i = 0
+        i = 0 # Gacha balls returns to 20 after the next day
     else:
         i = 20 - data.get("Gacha Balls")
+
+    # Stores the number of coins 
+    coinNum = data.get("Coins")
+    
+    # Increments coin accumulated during idle time 
     coinNum += int(abs((datetime.now() - datetime.fromisoformat(data.get("Last Saved DateTime"))).total_seconds())/300)
+
+    # Ensures max number of coins is 20
     if coinNum > 20:
         coinNum = 20
-    left_pressed = False
-    right_pressed = False
+
+    # Loading of left and right buttons
     leftbutton1 = pygame.image.load("images/left-button1.png").convert_alpha()
     leftbutton2 = pygame.image.load("images/left-button2.png").convert_alpha()
     rightbutton1 = pygame.image.load("images//right-button1.png").convert_alpha()
@@ -295,20 +301,26 @@ def game_loop():
     right_button_rect = rightbutton1.get_rect(topleft=(150, 575))
     transparent_surface = pygame.Surface((100, 100))  # Same size as the screen
     transparent_surface.set_alpha(0)
+
+    # Button flags
+    left_pressed = False
+    right_pressed = False
+
     while running:
         screen.fill((0, 0, 0))  # Clear screen
         screen.blit(background_image, (0, 0))  # Draw background
+
+        # Number of coins text
         font = pygame.font.Font(None, 64)
         text_surface = font.render(str(coinNum) + "x", True, (81, 87, 120))
-        
-        # Define the text position (center of the screen)
         text_rect = text_surface.get_rect(center=(475, 618))
-        
-        # Draw the updated text on the screen
         screen.blit(text_surface, text_rect)
+
+        # Draws Show Prizes button
         button_rect = draw_button(screen, "Show Prizes", 570, 540, 100, 50, (255, 173, 192), (0, 0, 0))
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT: # On termination of game
+                # Stores data to be saved in a dictionary
                 game_data = {
                     "Last Saved DateTime": datetime.now().isoformat(),
                     "Coins": coinNum,
@@ -319,29 +331,29 @@ def game_loop():
                 running = False
             if event.type == spawn_event:
                 if i < 20:
-                    gacha_prizes.append(GachaBall(space))
+                    gacha_prizes.append(GachaBall(space)) # Adds gacha balls to the list
                     i += 1
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_s:
+                if event.key == pygame.K_s: # Shuffles gacha balls on 's' key press
                     for gacha_ball in gacha_prizes:
                         gacha_ball.shuffle()
                 if event.key == pygame.K_LEFT and claw.state == "idle":  # Only move if in idle state
                     claw.x = max(100, claw.x - claw.SPEED)  # Stay within bounds
                     left_pressed = True
-                if event.key == pygame.K_RIGHT and claw.state == "idle":  # Only move if in idle state
-                    claw.x = min(SCREEN_WIDTH - 100, claw.x + claw.SPEED)  # Stay within bounds
+                if event.key == pygame.K_RIGHT and claw.state == "idle":  
+                    claw.x = min(SCREEN_WIDTH - 100, claw.x + claw.SPEED)
                     right_pressed = True
-                if event.key == pygame.K_SPACE and claw.state == "idle":  # Space to activate claw if idle
+                if event.key == pygame.K_SPACE and claw.state == "idle":  # Space to descend claw if idle
                     if coinNum > 0:
                         claw.state = "descending"
                         coinNum -= 1
-            if event.type == pygame.KEYUP:
+            if event.type == pygame.KEYUP: # Ensures buttons follow key press
                 if event.key == pygame.K_LEFT:
                     left_pressed = False
                 if event.key == pygame.K_RIGHT:
                     right_pressed = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if button_rect.collidepoint(event.pos):
+                if button_rect.collidepoint(event.pos): # Show Prizes
                     display_shelves_with_nested_sections(prize_sections, [[3, 5, 3], [3, 5, 3], [3, 5, 3], [3, 5, 3]])
                 if left_button_rect.collidepoint(event.pos):
                     left_pressed = True
@@ -363,7 +375,7 @@ def game_loop():
                 screen.blit(rightbutton2, right_button_rect)  # Show pressed image for right button
                 claw.x = min(SCREEN_WIDTH - 100, claw.x + claw.SPEED)
             else:
-                screen.blit(rightbutton1, right_button_rect)  # Show normal im
+                screen.blit(rightbutton1, right_button_rect)  # Show normal image for right button
         else:
             screen.blit(leftbutton1, left_button_rect)
             screen.blit(rightbutton1, right_button_rect)
@@ -379,7 +391,6 @@ def game_loop():
             if (claw.ascend(gacha_prizes, claw_points_open_list)):
                 markPrize()
                 
-
         # Draw claw
         angle = math.degrees(claw.body.angle)
         claw_image = (
@@ -387,6 +398,8 @@ def game_loop():
             if claw.state == "ascending"
             else claw_animation_close[claw.current_frame]
         )
+
+        # Updates claw
         blit_rotate_center(
             screen,
             claw_image,
@@ -396,22 +409,27 @@ def game_loop():
             ),
             -angle,
         )
-        # Draw gacha balls
+
+        # Draw gacha balls in gacha_prizes list
         for gacha_ball in gacha_prizes:
             body = gacha_ball.body
             angle = math.degrees(body.angle)
             x, y = body.position
             blit_rotate_center(screen, ball_image, (x - 40, y - 40), -angle)
+
         current_time = pygame.time.get_ticks()
+        interval = 60000  # 1 minute
+
         # Check if a minute has passed
         if current_time - last_time >= interval:
             coinNum += 1
             # Reset the minute timer
             last_time = current_time
+
         # Step the physics simulation
         space.step(1 / FPS)
-        pygame.display.flip()  # Update display
-        clock.tick(FPS)  # Maintain FPS
+        pygame.display.flip() # Update display
+        clock.tick(FPS) # Maintain FPS
     pygame.quit()
 
 # Initialize Pygame

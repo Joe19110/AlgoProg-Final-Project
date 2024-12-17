@@ -1,7 +1,7 @@
 import pymunk
 import random
 class GachaBall:
-    # Class-level constants
+    # Constants declaration
     SPAWN_X_RANGE = (29, 30)
     SPAWN_Y = 150
     RADIUS = 35
@@ -11,9 +11,6 @@ class GachaBall:
     COLLISION_TYPE = 1
 
     def __init__(self, space):
-        """
-        Initializes a gacha ball with predefined constants and adds it to the given space.
-        """
         self.space = space
 
         # Use constants for initialization
@@ -31,18 +28,10 @@ class GachaBall:
         # Add the body and shape to the space
         self.space.add(self.body, self.shape)
 
-    def get_body_and_shape(self):
-        """
-        Returns the pymunk body and shape of the gacha ball.
-        """
+    def get_body_and_shape(self): # Returns the pymunk body and shape of the gacha ball
         return self.body, self.shape
-    def shuffle(self, intensity=500):
-        """
-        Apply random forces to shuffle the gacha ball.
-        
-        Args:
-            intensity (float): The magnitude of the random forces.
-        """
+    
+    def shuffle(self, intensity=500): # Apply random forces to shuffle the gacha ball
         # Generate random force components
         force_x = random.uniform(-intensity, intensity)
         force_y = random.uniform(-intensity, intensity)
