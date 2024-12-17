@@ -282,7 +282,7 @@ def game_loop():
 
     # Stores the number of coins 
     coinNum = data.get("Coins")
-    
+
     # Increments coin accumulated during idle time 
     coinNum += int(abs((datetime.now() - datetime.fromisoformat(data.get("Last Saved DateTime"))).total_seconds())/300)
 
@@ -309,7 +309,7 @@ def game_loop():
     while running:
         screen.fill((0, 0, 0))  # Clear screen
         screen.blit(background_image, (0, 0))  # Draw background
-
+        screen.blit(logo, (295, 10))
         # Number of coins text
         font = pygame.font.Font(None, 64)
         text_surface = font.render(str(coinNum) + "x", True, (81, 87, 120))
@@ -453,9 +453,11 @@ claw_image2 = pygame.image.load("images/claw2.png").convert_alpha()
 claw_image3 = pygame.image.load("images/claw3.png").convert_alpha()
 ball_image = pygame.image.load("images/gacha.png").convert_alpha()
 background_image = pygame.image.load("images/machine.png").convert_alpha()
+logo = pygame.image.load("images/logo.png").convert_alpha()
 
-# Resize ball image
+# Resize images
 ball_image = pygame.transform.scale(ball_image, (70, 70))
+logo = pygame.transform.scale(logo, (120, 120))
 
 # Lists of frames (for claw animation)
 claw_animation_close = [claw_image1, claw_image2, claw_image3]  
